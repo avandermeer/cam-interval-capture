@@ -2,35 +2,45 @@
 
 //--------------------------------------------------------------
 void ofApp::setup() {
-	ofSetFrameRate(1000);
+	ofSetFrameRate(240); //240
 
+	//set width
+	if (arguments.size() > 2) {
+		camWidth = atoi(arguments[2].c_str());
+	}
+	else {
+	res_x_select:
 
-res_x_select:
-
-	printf("Wat is de horizontale resolutie (width)?");
-	std::cin >> camWidth;
-	if (!cin) // or if(cin.fail())
-	{
-		// user didn't input a number
-		cin.clear(); // reset failbit
-		cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); //skip bad input
-		goto res_x_select;															   // next, request user reinput
+		printf("Wat is de horizontale resolutie (width)?");
+		std::cin >> camWidth;
+		if (!cin) // or if(cin.fail())
+		{
+			// user didn't input a number
+			cin.clear(); // reset failbit
+			cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); //skip bad input
+			goto res_x_select;															   // next, request user reinput
+		}
 	}
 
-
-res_y_select:
-
-	printf("Wat is de verticale resolutie (height)?");
-	std::cin >> camHeight;
-	if (!cin) // or if(cin.fail())
-	{
-		// user didn't input a number
-		cin.clear(); // reset failbit
-		cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); //skip bad input
-		goto res_y_select;															   // next, request user reinput
+	//set height
+	if (arguments.size() > 3) {
+		camHeight = atoi(arguments[3].c_str());
 	}
+	else {
 
+	res_y_select:
 
+		printf("Wat is de verticale resolutie (height)?");
+		std::cin >> camHeight;
+		if (!cin) // or if(cin.fail())
+		{
+			// user didn't input a number
+			cin.clear(); // reset failbit
+			cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); //skip bad input
+			goto res_y_select;															   // next, request user reinput
+		}
+
+	}
 
 	//camWidth = 640;  // try to grab at this size.
 	//camHeight = 480;
@@ -73,15 +83,10 @@ res_y_select:
 	}
 
 
-	vidGrabber.setUseTexture(false);
-	vidGrabber.setDeviceID(deviceId);
-	vidGrabber.setDesiredFrameRate(60);
-	vidGrabber.setup(camWidth, camHeight, false);
-	vidGrabber.setUseTexture(false);
-
-	int interval = 300;
+	int interval = 333333333;//in nanoseconds
 	if (arguments.size() > 1) {
 		interval = atoi(arguments[1].c_str());
+		interval = interval * 1000000;
 	}
 
 	printf("interval: ");
@@ -90,10 +95,24 @@ res_y_select:
 	printf("");
 	printf("Press Ctrl+C to exit this program");
 
-	scheduler.init(&vidGrabber, interval);  
+
+	vidGrabber.setUseTexture(false);
+	vidGrabber.setDeviceID(deviceId);
+	vidGrabber.setDesiredFrameRate(15);
+	vidGrabber.setup(camWidth, camHeight, false);
+	vidGrabber.setUseTexture(false);
 
 
 
+	scheduler.init(&vidGrabber, interval, camWidth, camHeight);
+
+
+
+}
+
+void ofApp::update() {
+
+	vidGrabber.update();
 }
 
 

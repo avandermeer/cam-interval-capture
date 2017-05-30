@@ -9,7 +9,7 @@ class ofApp : public ofBaseApp {
 public:
 
 	void setup();
-
+	void update();
 
 	ofVideoGrabber vidGrabber;
 	int camWidth;
