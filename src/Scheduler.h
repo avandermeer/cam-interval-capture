@@ -1,23 +1,24 @@
 #include "ofThread.h"
 #include "ofTimer.h"
+#include <string> 
 
 class Scheduler : public ofThread {
 public:
+	bool active;
 
-	void init(ofVideoGrabber * vg, int interval, int w, int h) {
+	void init(ofVideoGrabber * vg, int interval, int * lIFT){
 		timer.setPeriodicEvent(interval); //miliseconds to nanoseconds
 		vidGrabber = vg;
 		startThread();
-		width = w;
-		height = h;
+		lastInterFrametime = lIFT;
 	}
 
 private:
 	ofTimer timer;
 	ofVideoGrabber * vidGrabber;
 	ofImage colorImg;
-	int width;
-	int height;
+	int * lastInterFrametime;
+	int highestFrameTime;
 
 	void threadedFunction() {
 	
@@ -27,13 +28,12 @@ private:
 			// Do your thing here. It will run at the set interval
 
 			lock();
+			active = true;
 
 			int skippedFrames = 0;
 
 
-				printf("new image found at: ");
-				cout << ofGetTimestampString();
-				printf("\n");
+
 				ofPixels & pixels = vidGrabber->getPixels();
 				string time = ofGetTimestampString();
 
@@ -41,15 +41,22 @@ private:
 				colorImg.setFromPixels(pixels);
 				//colorImg.mirror(false, true);
 				colorImg.setImageType(OF_IMAGE_GRAYSCALE);
-				ofSaveImage(colorImg.getPixelsRef(), "SAVEDIMAGE_" + time + ".bmp");
+							
+					
 
-				printf("saved at: ");
+				ofSaveImage(colorImg.getPixelsRef(), "SAVEDIMAGE_" + time + "--"+ std::to_string(*lastInterFrametime) + ".bmp");
+
+
+				printf("New image saved at: ");
 				cout << ofGetTimestampString();
-				printf("\n");
+				cout << "| name: SAVEDIMAGE_" << time << "--" << std::to_string(*lastInterFrametime) << ".bmp";
+				cout << "\n";
+				
 
+				*lastInterFrametime = 0;
 
 		
-			
+				active = false;
 			unlock();
 		}
 	}

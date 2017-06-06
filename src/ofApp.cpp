@@ -2,7 +2,15 @@
 
 //--------------------------------------------------------------
 void ofApp::setup() {
-	ofSetFrameRate(240); //240
+	fpscounter = 0;
+	prevFpsMilis = 0;
+	lastInterFrameTime = 20;
+
+
+	ofSetFrameRate(1000); //240
+
+
+
 
 	//set width
 	if (arguments.size() > 2) {
@@ -15,10 +23,10 @@ void ofApp::setup() {
 		std::cin >> camWidth;
 		if (!cin) // or if(cin.fail())
 		{
-			// user didn't input a number
-			cin.clear(); // reset failbit
-			cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); //skip bad input
-			goto res_x_select;															   // next, request user reinput
+		// user didn't input a number
+		cin.clear(); // reset failbit
+		cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); //skip bad input
+		goto res_x_select;															   // next, request user reinput
 		}
 	}
 
@@ -66,24 +74,25 @@ void ofApp::setup() {
 		deviceId = 0;
 	}
 	else {
-		device_select:
+	device_select:
 
-			printf("Multiple devices found- please enter index:(0-");
-			cout << devices.size() - 1;
-			printf(")");
-			std::cin >> deviceId;
-			if (!(deviceId >= 0 && deviceId < devices.size()))
-			{	
-				printf("Wrong input\n");
-				std::cin.clear();
-				std::cin.ignore(std::numeric_limits<streamsize>::max(), '\n');
-				goto device_select;
-			
-			}
+		printf("Multiple devices found- please enter index:(0-");
+		cout << devices.size() - 1;
+		printf(")");
+		std::cin >> deviceId;
+		if (!(deviceId >= 0 && deviceId < devices.size()))
+		{
+			printf("Wrong input\n");
+			std::cin.clear();
+			std::cin.ignore(std::numeric_limits<streamsize>::max(), '\n');
+			goto device_select;
+
+		}
 	}
 
 
 	int interval = 333333333;//in nanoseconds
+	//int interval = 300000000;//in nanoseconds
 	if (arguments.size() > 1) {
 		interval = atoi(arguments[1].c_str());
 		interval = interval * 1000000;
@@ -98,22 +107,55 @@ void ofApp::setup() {
 
 	vidGrabber.setUseTexture(false);
 	vidGrabber.setDeviceID(deviceId);
-	vidGrabber.setDesiredFrameRate(15);
+
 	vidGrabber.setup(camWidth, camHeight, false);
+	//vidGrabber.setDesiredFrameRate(3);
 	vidGrabber.setUseTexture(false);
+	vidGrabber.videoSettings();
 
 
+	scheduler.init(&vidGrabber, interval, &lastInterFrameTime);
 
-	scheduler.init(&vidGrabber, interval, camWidth, camHeight);
-
-
+	start = ofGetElapsedTimeMillis();
+	prevSec = 0;
 
 }
 
 void ofApp::update() {
+	//cout << ofGetTimestampString("%i")<<"\n";
 
-	vidGrabber.update();
+		
+	if ((ofGetElapsedTimeMillis() - start) / 1000 > prevSec){
+		if (ofGetElapsedTimeMillis() - start > 1000) { //delen door nul is niet oké
+			cout << fpscounter / ((ofGetElapsedTimeMillis()-start) / 1000) << "fps \n";
+		}
+		
+		//fpscounter = 0;
+	}
+	prevSec = (ofGetElapsedTimeMillis() - start) / 1000;
+
+	//if (!scheduler.active) { //only update if thread is not active
+	scheduler.lock();
+		vidGrabber.update();
+		if (vidGrabber.isFrameNew()) {
+
+
+			int now = std::stoi(ofGetTimestampString("%i"));
+			int timeDiff = now - prevFpsMilis;
+			if (timeDiff <= 0) {
+				timeDiff = 1000 - prevFpsMilis + now;
+			}
+			lastInterFrameTime = lastInterFrameTime + timeDiff;
+			//cout << timeDiff << " | " << prevFpsMilis << ", " << now << " | " << lastInterFrameTime << "\n";
+			prevFpsMilis = std::stoi(ofGetTimestampString("%i"));
+
+
+			fpscounter = fpscounter + 1;
+
+		}
+		scheduler.unlock();
+	//}
 }
-
+ 
 
 

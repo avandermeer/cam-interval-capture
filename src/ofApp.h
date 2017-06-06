@@ -15,6 +15,13 @@ public:
 	int camWidth;
 	int camHeight;
 
+	int fpscounter;
+	int prevFpsMilis;
+	int lastInterFrameTime;
+
+	int start;
+	int prevSec;
+
 	Scheduler scheduler;
 
 	vector<string> arguments;
